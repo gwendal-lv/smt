@@ -12,6 +12,8 @@ function [sin_harm_morph] = smt(source_path,target_path,morph_factor)
 % $Id 2022 M Caetano SMT 0.3.0-alpha.1 $Id
 
 
+tic
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SOURCE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -81,14 +83,14 @@ tsm_winsize = 3*tsm_winoverlap;
 % maxcorr >= T0
 maxcorr = 600; % 13.6 ms @ 44.1kHz
 
-% Interpolated duration
+% Interpolated duration (depends on morph_factor)
 nsample_morph = fix((nsample_source + nsample_target)*morph_factor);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TSM SOURCE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% TSM factor source sound
+% TSM factor source sound (depends on morph_factor)
 tsmfactor_source = nsample_morph/nsample_source;
 
 % TSM source sound
@@ -98,7 +100,7 @@ tsm_source = solafs(audio_source,tsm_winsize,tsm_synth_hopsize,maxcorr,tsmfactor
 % TSM TARGET
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% TSM factor target sound
+% TSM factor target sound  (depends on morph_factor)
 tsmfactor_target = nsample_morph/nsample_target;
 
 % TSM target sound
@@ -194,6 +196,7 @@ dispflag = false;
     trackdurflag,durthres,gapthres,...
     harmselflag,ref0_source,tvarf0flag,max_harm_dev,harm_thresh,harmpartflag);
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SINUSOIDAL ANALYSIS TARGET
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -206,10 +209,14 @@ dispflag = false;
     trackdurflag,durthres,gapthres,...
     harmselflag,ref0_target,tvarf0flag,max_harm_dev,harm_thresh,harmpartflag);
 
+disp("TOTAL analysis time:");
+toc
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % INTERPOLATE HARMONICS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+tic
+ 
 nsample_morph = max(nsample_source,nsample_target);
 cframe_morph = cframe_source;
 nframe_morph = nframe_source;
@@ -238,5 +245,8 @@ fs_morph = 44100;
     sinusoidal_resynthesis(interp_amp,interp_freq,interp_ph,...
     framelen,hop,fs_morph,winflag,nsample_morph,cframe_morph,npartial_morph,nframe_morph,nchannel_morph,...
     durthres,gapthres,max_harm_dev,'non','PRFI',ptrackflag,trackdurflag,dispflag);
+
+disp("Interpolation and resynthesis time:");
+toc
 
 end

@@ -26,10 +26,10 @@ setenv('SMT',exeDir)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Absolute path of audio file (using EXEDIR)
-sourcePath = fullfile(exeDir,'audio','Accordion_C#3_f.wav');
+sourcePath = fullfile(exeDir,'audio/dev','clavinet_C3_f_4s.wav');
 
 % Absolute path of audio file (using EXEDIR)
-targetPath = fullfile(exeDir,'audio','Tuba_oV_hA_2-120_ff_C3.wav');
+targetPath = fullfile(exeDir,'audio/dev','organ_mustard_060_085_4s.wav');
 
 % Morphing factor
 morphFactor = 0.5;
@@ -46,8 +46,7 @@ morph = smt(sourcePath,targetPath,morphFactor);
 
 % Sampling rate
 fs = 44100;
-
-audiowrite(fullfile(exeDir,'audio','morph.wav'),morph,fs)
+audiowrite(fullfile(exeDir,'audio','morph_4s.wav'),morph,fs)
 
 % Play MORPH
 sound(morph,fs)
