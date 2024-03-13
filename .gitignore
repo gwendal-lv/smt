@@ -8,3 +8,6 @@ _*/
 @*/
 # Ignore morph.wav file
 morph.wav
+
+# Custom Evaluations
+audio/interp9_test/

@@ -1,5 +1,10 @@
 % RUN SOUND MORPHING TOOLBOX
 
+% Original data
+fs = 16000;  % WARNING : must correspond to the original sounds' fs
+original_base_dir = 'audio/interp9_test/00007';
+n_steps = 9;  % MUST be < 10 (1 digit)
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ADD FOLDER FROM CURRENTLY RUNNING SCRIPT TO MATLAB PATH
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -26,27 +31,30 @@ setenv('SMT',exeDir)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Absolute path of audio file (using EXEDIR)
-sourcePath = fullfile(exeDir,'audio/dev','clavinet_C3_f_4s.wav');
-
+sourcePath = fullfile(exeDir,original_base_dir, 'audio_step00.wav');
 % Absolute path of audio file (using EXEDIR)
-targetPath = fullfile(exeDir,'audio/dev','organ_mustard_060_085_4s.wav');
+%targetPath = fullfile(exeDir,original_base_dir, 'audio_step08.wav');
+targetPath = fullfile(exeDir,original_base_dir, ['audio_step0' num2str(n_steps - 1) '.wav']);
 
-% Morphing factor
-morphFactor = 0.5;
+% Morphing factors
+morphFactors = 0.0:(1/(n_steps-1)):1.0;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % RUN SMT
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-morph = smt(sourcePath,targetPath,morphFactor);
+% retrieve MULTIPLE files - in a cell array
+multi_audio = smt(sourcePath,targetPath,morphFactors);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LISTEN TO SOUNDS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Sampling rate
-fs = 44100;
-audiowrite(fullfile(exeDir,'audio','morph_4s.wav'),morph,fs)
+for i = 1:length(morphFactors) 
+    morph = multi_audio{i};
+    file_name = ['morph_step' num2str(i) '.wav'];
+    audiowrite(fullfile(exeDir,'audio/dev',file_name), morph, fs);
+end
 
 % Play MORPH
-sound(morph,fs)
+%sound(morph,fs)

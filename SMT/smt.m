@@ -1,4 +1,4 @@
-function [sin_harm_morph] = smt(source_path,target_path,morph_factor)
+function [multi_morph_output] = smt(source_path,target_path,morph_factors)
 %SMT Sound morphing toolbox
 %   M = SMT(S,T,ALPHA) generates the morph M between the source S and the
 %   target T according to the morphing factor ALPHA varying between 0 and
@@ -11,6 +11,9 @@ function [sin_harm_morph] = smt(source_path,target_path,morph_factor)
 % 2022 M Caetano SMT (Revised)
 % $Id 2022 M Caetano SMT 0.3.0-alpha.1 $Id
 
+
+% TODO modification: assert that input sounds are the same length
+%    (strong limitation... but necessary to make this work)
 
 tic
 
@@ -83,14 +86,19 @@ tsm_winsize = 3*tsm_winoverlap;
 % maxcorr >= T0
 maxcorr = 600; % 13.6 ms @ 44.1kHz
 
-% Interpolated duration (depends on morph_factor)
-nsample_morph = fix((nsample_source + nsample_target)*morph_factor);
+% Interpolated duration (used to depend on morph_factor) - is now LIMITED to constant
+%nsample_morph = fix((nsample_source + nsample_target)*morph_factor);
+% LIMITED MORPH to increase speed: exactly the same number of samples
+if nsample_target ~= nsample_source
+    error("Target and source must have EXACTLY the same length")
+end
+nsample_morph = nsample_source;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TSM SOURCE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% TSM factor source sound (depends on morph_factor)
+% TSM factor source sound (does not depend anymore on morph_factor)
 tsmfactor_source = nsample_morph/nsample_source;
 
 % TSM source sound
@@ -212,41 +220,42 @@ dispflag = false;
 disp("TOTAL analysis time:");
 toc
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% INTERPOLATE HARMONICS
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ===== Interpolation MULTI STEPS =====
 tic
- 
-nsample_morph = max(nsample_source,nsample_target);
-cframe_morph = cframe_source;
-nframe_morph = nframe_source;
-nchannel_morph = nchannel_source;
+multi_morph_output = {};
 
-[interp_amp,interp_freq] = partial_interpolation(amp_source,freq_source,ref0_source,npartial_source,...
-    amp_target,freq_target,ref0_target,npartial_target,nframe_morph,nchannel_morph,morph_factor,'log');
+for morph_factor = morph_factors
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % INTERPOLATE HARMONICS
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    nsample_morph = max(nsample_source,nsample_target);
+    cframe_morph = cframe_source;
+    nframe_morph = nframe_source;
+    nchannel_morph = nchannel_source;
+    
+    [interp_amp,interp_freq] = partial_interpolation(amp_source,freq_source,ref0_source,npartial_source,...
+        amp_target,freq_target,ref0_target,npartial_target,nframe_morph,nchannel_morph,morph_factor,'log');
+    
+    npartial_morph = size(interp_freq,1);
+    nchannel_morph = nchannel_source;
+    interp_ph = zeros(size(interp_freq));
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % SINUSOIDAL RESYNTHESIS
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    fs_morph = 44100;
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % PRFI RESYNTHESIS
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    [sin_harm_morph,part_harm_morph,amp_part_morph,freq_part_morph] = ...
+        sinusoidal_resynthesis(interp_amp,interp_freq,interp_ph,...
+        framelen,hop,fs_morph,winflag,nsample_morph,cframe_morph,npartial_morph,nframe_morph,nchannel_morph,...
+        durthres,gapthres,max_harm_dev,'non','PRFI',ptrackflag,trackdurflag,dispflag);
 
-npartial_morph = size(interp_freq,1);
-
-nchannel_morph = nchannel_source;
-
-interp_ph = zeros(size(interp_freq));
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% SINUSOIDAL RESYNTHESIS
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-fs_morph = 44100;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% PRFI RESYNTHESIS
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-[sin_harm_morph,part_harm_morph,amp_part_morph,freq_part_morph] = ...
-    sinusoidal_resynthesis(interp_amp,interp_freq,interp_ph,...
-    framelen,hop,fs_morph,winflag,nsample_morph,cframe_morph,npartial_morph,nframe_morph,nchannel_morph,...
-    durthres,gapthres,max_harm_dev,'non','PRFI',ptrackflag,trackdurflag,dispflag);
+    multi_morph_output{end+1} = sin_harm_morph;
+end
 
 disp("Interpolation and resynthesis time:");
 toc
-
-end
