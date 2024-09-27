@@ -144,7 +144,7 @@ zphflag = true;
 % PARAMETER ESTIMATION
 paramestflag = 'pow';
 % Maximum number of peaks to retrieve from analysis
-maxnpeak = 150;
+maxnpeak = 100;  % reduced from 150 to 100...
 % Return MAXNPEAK frequency bins
 npeakflag = false;
 
@@ -185,7 +185,7 @@ framelen = max(framelen_source,framelen_target);
 % 50% overlap
 hop = tools.dsp.hopsize(framelen,0.5);
 % Spectral oversampling factor
-osfac = 4;
+osfac = 2;  % reduced from 4 to 2...
 % Size of the FFT
 nfft = tools.dsp.fftsize(framelen,osfac);
 

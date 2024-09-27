@@ -5,8 +5,8 @@
 % loading original 16kHz audio, and computing a 16kHz morphing
 % Same for 48kHz: pitched too high
 fs = 44100;  % WARNING : must be 44.1 kHz... can't explain why
-%original_base_dir = 'audio/interp9_test/00007';
-n_steps = 9;  % must be < 10 (1 digit)
+dataDir = 'C:/Users/Gwendal/Documents/MATLAB/smt/audio/multi_fs';  % must contain a start.wav and an end.wav
+n_steps = 7;  % must be < 10 (1 digit)
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -27,13 +27,10 @@ setenv('SMT',exeDir);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % INPUT PARAMETERS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Absolute path of audio file (using EXEDIR)
-sourcePath = fullfile(exeDir,original_base_dir, 'audio_step00.wav');
-sourcePath = fullfile(exeDir, 'audio/multi_fs', 'organ_short_44100Hz.wav');
-% Absolute path of audio file (using EXEDIR)
-%targetPath = fullfile(exeDir,original_base_dir, 'audio_step08.wav');
-targetPath = fullfile(exeDir,original_base_dir, ['audio_step0' num2str(n_steps - 1) '.wav']);
-targetPath = fullfile(exeDir, 'audio/multi_fs', 'lead_short_44100Hz.wav');
+% Absolute path of audio file
+sourcePath = fullfile(dataDir, 'organ_short_44100Hz.wav');  % Warning: SMT reverses start and end... (source and target)
+% Absolute path of audio file
+targetPath = fullfile(dataDir, 'lead_short_44100Hz.wav');
 
 % Morphing factors
 morphFactors = 0.0:(1/(n_steps-1)):1.0;
@@ -46,11 +43,11 @@ multi_audio = smt(sourcePath,targetPath,morphFactors);
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% SAVE SOUNDS
+% SAVE SOUNDS - directly in the original dataDir
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i = 1:length(morphFactors) 
     morph = multi_audio{i};
     file_name = ['morph_step' num2str(i - 1) '.wav'];
-    audiowrite(fullfile('Z:/seq_temp', file_name), morph, fs);
+    audiowrite(fullfile(dataDir, file_name), morph, fs);
 end
 
